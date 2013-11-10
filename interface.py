@@ -90,6 +90,21 @@ class MainWindow(QMainWindow):
         self.connect(self.engine,SIGNAL("new output data"),self.update_plots)
         
         self.connect(self.engine,SIGNAL("new geometry plot"),self.update_geometry_plot)
+        
+        self.connect(self.logView,SIGNAL("new line"),self.parse_logline)
+
+    def parse_logline(self,line):
+      words = line.split()
+      if len(words)>0 and "/1" in words[0]:
+        data = {}
+        if len(words) == 3:
+          data['keff'] = float(words[1])
+          data['shannon'] = float(words[2])
+          self.update_plots(data)
+        elif len(words) == 6:
+          data['keff'] = float(words[3])
+          data['shannon'] = float(words[2])
+          self.update_plots(data)
 
     def update_geometry_plot(self,img_path):
       self.geometry.set_image(img_path)

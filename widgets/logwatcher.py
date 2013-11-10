@@ -33,6 +33,7 @@ class LogWatcher(QWidget):
             newlines = fh.readlines()
             if len(newlines) > len(self.lines):
                 for line in newlines[len(self.lines)-len(newlines):]:
+                    self.emit(SIGNAL("new line"),line)
                     self.display.append(line[:-1])
                 self.display.update()
                 self.lines = newlines

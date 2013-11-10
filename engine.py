@@ -94,13 +94,13 @@ class OpenMCEngine(QWidget):
     self.currently_running = False
     self.process_tallies()
 
-  def parse_output(self):
-    # parse output here and fire signal with new datapoints for plotting
-    # populate data dictionary from the output
-    data = {}
-    data['shannon'] = 1.3
-    data['keff'] = 1.0
-    self.emit(SIGNAL("new plot data"),data)
+#  def parse_output(self):
+#    # parse output here and fire signal with new datapoints for plotting
+#    # populate data dictionary from the output
+#    data = {}
+#    data['shannon'] = 1.3
+#    data['keff'] = 1.0
+#    self.emit(SIGNAL("new plot data"),data)
 
   def process_geometry_plot(self):
       proc = Popen(['convert','tmpdir/minicore_inputs/1_slice.ppm','tmpdir/minicore_inputs/1_slice.png'])
