@@ -12,6 +12,7 @@ class OpenMCEngine(QObject):
   def __init__(self, parent=None):
     QObject.__init__(self,parent=parent)
     self.outputlog = "output.log"
+    self.currently_running = False
     
   def run(self,params,stencil):
     self.make_inputs(stencil)
@@ -66,18 +67,16 @@ class OpenMCEngine(QObject):
           return str(200) # 3.1% 20 BAs
 
   def execute(self,params):
-#   timer = QTimer(self)
-#   QObject.connect(timer, SIGNAL("timeout()"), self.parse_output)
-#   timer.start(10)
-#   for i in range(10000000): pass
-#   timer.stop()
-    
-    # run openmc here with subprocess, piping output to self.outputlog
-#   fh = open('output.log','w')
-    proc = Popen(['openmc','tmpdir/minicore_inputs'])
-    proc.wait()
+    if self.currently_running: return
+    self.currently_running = True
+    worker = Worker(self)
+    QObject.connect(worker,SIGNAL("finished()"),self.run_completed)
+    worker.start()
+
+  def run_completed(self):
+    print "Run completed!"
+    self.currently_running = False
     self.process_tallies()
-#   fh.close()
 
   def parse_output(self):
     # parse output here and fire signal with new datapoints for plotting
@@ -154,3 +153,16 @@ class OpenMCEngine(QObject):
         fh.write(flux1_str)
     with open('tmpdir/minicore_outputs/flux2.dat','w') as fh:
         fh.write(flux2_str)
+
+class Worker(QThread):
+
+    def __init__(self,parent):
+        '''Parent must be defined to stop early garbage collection'''
+        QThread.__init__(self,parent)
+
+    def run(self):
+      try:
+        proc = Popen(['openmc','tmpdir/minicore_inputs'])
+        proc.wait()
+      except OSError:
+        print "Problem running OpenMC!  Is the exe in the path?"
