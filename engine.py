@@ -7,10 +7,11 @@ from subprocess import Popen, STDOUT, PIPE
 import sys
 import statepoint
 import glob
+import time
 
-class OpenMCEngine(QObject):
+class OpenMCEngine(QWidget):
   def __init__(self, parent=None):
-    QObject.__init__(self,parent=parent)
+    QWidget.__init__(self,parent=parent)
     self.outputlog = "output.log"
     self.currently_running = False
     
@@ -20,8 +21,22 @@ class OpenMCEngine(QObject):
 
   def run_plot(self,stencil):
     self.make_inputs(stencil)
+
     worker = Worker(self,plot=True)
-    QObject.connect(worker,SIGNAL("finished()"),self.process_geometry_plot)
+    
+    progress = QProgressDialog("Processing Plot...","Cancel",0,100,self)
+    progress.setWindowTitle("Processing Plot")
+    progress.setMinimumDuration(0)
+    progress.setWindowModality(Qt.WindowModal)
+    self.connect(progress,SIGNAL("canceled()"),worker.cancel)
+    self.connect(worker,SIGNAL("finished error"),progress,SLOT("cancel()"))
+    self.connect(worker,SIGNAL("finished success"),progress,SLOT("cancel()"))
+    progress.setValue(0)
+    
+    # if we make the progress bar persist as a member of the engine class, we
+    # can call setValue on it to update the value it displays
+    
+    QObject.connect(worker,SIGNAL("finished success"),self.process_geometry_plot)
     worker.start()
 
   def make_inputs(self,stencil):
@@ -71,11 +86,10 @@ class OpenMCEngine(QObject):
     if self.currently_running: return
     self.currently_running = True
     worker = Worker(self)
-    QObject.connect(worker,SIGNAL("finished()"),self.run_completed)
+    QObject.connect(worker,SIGNAL("finished success"),self.run_completed)
     worker.start()
 
   def run_completed(self):
-    print "Run completed!"
     self.currently_running = False
     self.process_tallies()
 
@@ -161,6 +175,7 @@ class Worker(QThread):
         '''Parent must be defined to stop early garbage collection'''
         QThread.__init__(self,parent)
         self.plot = plot
+        self.cancelled = False
 
     def run(self):
       try:
@@ -168,6 +183,19 @@ class Worker(QThread):
           proc = Popen(['openmc','--plot','tmpdir/minicore_inputs'])
         else:
           proc = Popen(['openmc','tmpdir/minicore_inputs'])
-        proc.wait()
+
+        while proc.poll() is None:
+          if self.cancelled:
+            proc.kill()
+            self.emit(SIGNAL("finished error"))
+            return
+          time.sleep(0.1)
+
+        self.emit(SIGNAL("finished success"))
+
       except OSError:
         print "Problem running OpenMC!  Is the exe in the path?"
+        self.emit(SIGNAL("finished error"))
+        
+    def cancel(self):
+      self.cancelled = True
