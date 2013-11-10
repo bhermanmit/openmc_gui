@@ -64,7 +64,7 @@ class OpenMCEngine(QWidget):
           for item in sline:
               newstr += '{0} '.format(item)
           lines[rowbegin + i] = newstr
-          print newstr
+
           # rewrite file
           with open(geofile,'w') as fh:
               for aline in lines:
@@ -115,7 +115,7 @@ class OpenMCEngine(QWidget):
       # reshape and integrate over energy
       mean = mean.reshape(results['bin_max'],order='F')
       mean = mean/mean.sum()*(mean > 1.e-8).sum()
-      print mean.shape
+
       return mean
 
   def process_tallies(self):
@@ -180,9 +180,9 @@ class Worker(QThread):
     def run(self):
       try:
         if self.plot:
-          proc = Popen(['openmc','--plot','tmpdir/minicore_inputs'])
+          proc = Popen(['mpiexec','-np','4','openmc','--plot','tmpdir/minicore_inputs'])
         else:
-          proc = Popen(['openmc','tmpdir/minicore_inputs'])
+          proc = Popen(['mpiexec','-np','4','openmc','tmpdir/minicore_inputs'])
 
         while proc.poll() is None:
           if self.cancelled:
