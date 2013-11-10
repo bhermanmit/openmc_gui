@@ -20,4 +20,6 @@
     <upper_right> 53.7591 53.7591 230.0 </upper_right>
   </entropy>
 
+  <output_path>tmpdir/minicore_outputs</output_path>
+
 </settings>

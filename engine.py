@@ -5,6 +5,8 @@ from PyQt4.QtGui import *
 
 from subprocess import Popen, STDOUT, PIPE
 import sys
+import statepoint
+import glob
 
 class OpenMCEngine(QObject):
   def __init__(self, parent=None):
@@ -73,6 +75,8 @@ class OpenMCEngine(QObject):
     # run openmc here with subprocess, piping output to self.outputlog
 #   fh = open('output.log','w')
     proc = Popen(['openmc','tmpdir/minicore_inputs'])
+    proc.wait()
+    self.process_tallies()
 #   fh.close()
 
   def parse_output(self):
@@ -85,3 +89,68 @@ class OpenMCEngine(QObject):
 
   def process_geometry_plot(self):
       proc = Popen(['convert','tmpdir/minicore_inputs/1_slice.ppm','tmpdir/minicore_inputs/1_slice.png'])
+
+  def extract_mean(self, sp, tally_id, score_id):
+
+      # extract results
+      results = sp.extract_results(tally_id,score_id)
+
+      # extract means and copy
+      mean = results['mean'].copy()
+
+      # reshape and integrate over energy
+      mean = mean.reshape(results['bin_max'],order='F')
+      mean = mean/mean.sum()*(mean > 1.e-8).sum()
+      print mean.shape
+      return mean
+
+  def process_tallies(self):
+
+      # get statepoint filename
+      spfile = glob.glob('tmpdir/minicore_outputs/statepoint*')[0]
+
+      # extract all means
+      sp = statepoint.StatePoint(spfile)
+
+      # plot
+      sp.read_results()
+
+      # extract distributions 
+      nfiss = self.extract_mean(sp, 1, 'nu-fission')
+      flux2 = self.extract_mean(sp, 2, 'flux')
+      flux1 = self.extract_mean(sp, 3, 'flux')
+
+      # write out data
+      self.write_gnuplot_data(nfiss, flux1, flux2)
+
+      # run gnuplot
+      Popen(['gnuplot','tmpdir/minicore_outputs/nfiss.plot'])
+      Popen(['gnuplot','tmpdir/minicore_outputs/flux1.plot'])
+      Popen(['gnuplot','tmpdir/minicore_outputs/flux2.plot'])
+
+  def write_gnuplot_data(self, nfiss, flux1, flux2):
+
+    nfiss_str = ""
+    for i in range(nfiss.shape[0]):
+        for j in range(nfiss.shape[1]):
+                nfiss_str += '{0} '.format(nfiss[i,j,0])
+        nfiss_str += '\n'
+
+    flux1_str = ""
+    for i in range(flux1.shape[1]):
+        for j in range(flux1.shape[2]):
+                flux1_str += '{0} '.format(flux1[0,i,j,0])
+        flux1_str += '\n'
+
+    flux2_str = ""
+    for i in range(flux2.shape[1]):
+        for j in range(flux2.shape[2]):
+                flux2_str += '{0} '.format(flux2[0,i,j,0])
+        flux2_str += '\n'
+
+    with open('tmpdir/minicore_outputs/nfiss.dat','w') as fh:
+        fh.write(nfiss_str)
+    with open('tmpdir/minicore_outputs/flux1.dat','w') as fh:
+        fh.write(flux1_str)
+    with open('tmpdir/minicore_outputs/flux2.dat','w') as fh:
+        fh.write(flux2_str)
