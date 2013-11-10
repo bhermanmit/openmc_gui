@@ -3,7 +3,8 @@ from __future__ import division
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 
-import subprocess
+from subprocess import Popen, STDOUT, PIPE
+import sys
 
 class OpenMCEngine(QObject):
   def __init__(self, parent=None):
@@ -13,10 +14,9 @@ class OpenMCEngine(QObject):
   def run(self,params,stencil):
     pass
     self.make_inputs(stencil)
-    #self.execute(params)
+    self.execute(params)
 
   def make_inputs(self,stencil):
-      print stencil
       geofile = 'tmpdir/minicore_inputs/geometry.xml'
       with open(geofile,'r') as fh:
           lines = fh.read().splitlines()
@@ -59,14 +59,18 @@ class OpenMCEngine(QObject):
           return str(200) # 3.1% 20 BAs
 
   def execute(self,params):
-    timer = QTimer(self)
-    QObject.connect(timer, SIGNAL("timeout()"), self.parse_output)
-    timer.start(10)
-    for i in range(10000000): pass
-    timer.stop()
+#   timer = QTimer(self)
+#   QObject.connect(timer, SIGNAL("timeout()"), self.parse_output)
+#   timer.start(10)
+#   for i in range(10000000): pass
+#   timer.stop()
     
     # run openmc here with subprocess, piping output to self.outputlog
-    
+    fh = open('output.log','w')
+    openmc_path = 'openmc'
+    proc = Popen(['openmc','tmpdir/minicore_inputs'])
+    fh.close()
+
   def parse_output(self):
     # parse output here and fire signal with new datapoints for plotting
     # populate data dictionary from the output
