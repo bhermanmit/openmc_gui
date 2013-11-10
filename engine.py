@@ -20,18 +20,19 @@ class OpenMCEngine(QWidget):
     self.execute(params)
 
   def run_plot(self,stencil):
+  
     self.make_inputs(stencil)
 
     worker = Worker(self,plot=True)
     
-    progress = QProgressDialog("Processing Plot...","Cancel",0,100,self)
-    progress.setWindowTitle("Processing Plot")
-    progress.setMinimumDuration(0)
-    progress.setWindowModality(Qt.WindowModal)
-    self.connect(progress,SIGNAL("canceled()"),worker.cancel)
-    self.connect(worker,SIGNAL("finished error"),progress,SLOT("cancel()"))
-    self.connect(worker,SIGNAL("finished success"),progress,SLOT("cancel()"))
-    progress.setValue(0)
+    self.progress = QProgressDialog("Processing Plot...","Cancel",0,100,self)
+    self.progress.setWindowTitle("Processing Plot")
+    self.progress.setMinimumDuration(0)
+    self.progress.setWindowModality(Qt.WindowModal)
+    self.connect(self.progress,SIGNAL("canceled()"),worker.cancel)
+    self.connect(worker,SIGNAL("finished error"),self.progress,SLOT("cancel()"))
+    self.connect(worker,SIGNAL("finished success"),self.progress,SLOT("cancel()"))
+    self.progress.setValue(0)
     
     # if we make the progress bar persist as a member of the engine class, we
     # can call setValue on it to update the value it displays
@@ -103,6 +104,7 @@ class OpenMCEngine(QWidget):
 
   def process_geometry_plot(self):
       proc = Popen(['convert','tmpdir/minicore_inputs/1_slice.ppm','tmpdir/minicore_inputs/1_slice.png'])
+      self.emit(SIGNAL("new geometry plot"),'tmpdir/minicore_inputs/1_slice.png')
 
   def extract_mean(self, sp, tally_id, score_id):
 

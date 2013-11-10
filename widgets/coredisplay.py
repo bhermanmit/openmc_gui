@@ -19,7 +19,6 @@ class CoreDisplay(QGraphicsView):
             ]
         
         self.scene = QGraphicsScene(self)
-        self.scene.maxZ = 0
         self.setScene(self.scene)
         self.connect(self.scene, SIGNAL("selectionChanged()"), self.refresh)
 

@@ -52,21 +52,20 @@ class MainWindow(QMainWindow):
         self.coreDisplay = widgets.CoreDisplay(None)
         self.plotShannon = widgets.PlotWidget()
         self.plotKeff = widgets.PlotWidget()
-        self.geometry = widgets.PlotWidget()
+        self.geometry = widgets.ImageViewer(image_path=None)
         self.powerDist = widgets.PlotWidget()
         self.fluxDist = widgets.PlotWidget()
         self.logView = widgets.LogWatcher(self.engine.outputlog)
         self.assemblyControls = widgets.AssemblyControls()
-
         # Setup widget layouts
 
         rightLayout = QHBoxLayout()
-        tabsPlot = QTabWidget()
-        tabsPlot.addTab(self.plotKeff, "K effective")
-        tabsPlot.addTab(self.plotShannon, "Shannon Entropy")
-        tabsPlot.addTab(self.geometry, "Geometry")
-        tabsPlot.addTab(self.powerDist, "Power")
-        tabsPlot.addTab(self.fluxDist, "Flux")
+        self.tabsPlot = QTabWidget()
+        self.tabsPlot.addTab(self.plotKeff, "K effective")
+        self.tabsPlot.addTab(self.plotShannon, "Shannon Entropy")
+        self.tabsPlot.addTab(self.geometry, "Geometry")
+        self.tabsPlot.addTab(self.powerDist, "Power")
+        self.tabsPlot.addTab(self.fluxDist, "Flux")
 
         outerHorSplit = QSplitter()
         leftVertSplit = QSplitter()
@@ -78,7 +77,7 @@ class MainWindow(QMainWindow):
         leftVertSplit.addWidget(self.coreDisplay)
         leftVertSplit.addWidget(self.assemblyControls)
 
-        rightVertSplit.addWidget(tabsPlot)
+        rightVertSplit.addWidget(self.tabsPlot)
         rightVertSplit.addWidget(self.logView)
 
         outerHorSplit.addWidget(leftVertSplit)
@@ -89,12 +88,16 @@ class MainWindow(QMainWindow):
         self.connect(self.assemblyControls,SIGNAL("run openmc plot"),self.run_openmc_plot)
         
         self.connect(self.engine,SIGNAL("new output data"),self.update_plots)
+        
+        self.connect(self.engine,SIGNAL("new geometry plot"),self.update_geometry_plot)
+
+    def update_geometry_plot(self,img_path):
+      self.geometry.set_image(img_path)
+      self.tabsPlot.setCurrentWidget(self.geometry)
 
     def run_openmc(self,params):
-    
       self.plotShannon.clear()
       self.plotKeff.clear()
-    
       stencil = self.coreDisplay.stencil
       self.engine.run(params,stencil)
 
