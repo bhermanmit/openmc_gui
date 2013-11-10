@@ -19,16 +19,14 @@ class ImageViewer(QGraphicsView):
     
     self.set_image(self.imagePath)
     
-    self.resizeEvent = self.refresh_image
-    
   def set_image(self, path):
     self.imagePath = path
-    self.refresh_image()
-  
-  def refresh_image(self, event=None):
     self.scene.clear()
     if self.imagePath:
       pm = QPixmap(self.imagePath)
       item = QGraphicsPixmapItem(pm)
       self.scene.addItem(item)
       self.fitInView(self.scene.sceneRect(),Qt.KeepAspectRatio)
+  
+  def resizeEvent(self, event):
+    self.fitInView(self.scene.sceneRect(),Qt.KeepAspectRatio)
