@@ -48,6 +48,7 @@ class CoreDisplay(QGraphicsView):
 
         for r,row in enumerate(self.stencil):
             for c,assType in enumerate(row):
+                if assType == 0: continue
                 ass = AssemblyDisplay(r,c,assType,self,scene=self.scene)
                 self.connect(ass.sigFire,SIGNAL("assemblySwapped"),
                              self.assembly_swap)
@@ -139,12 +140,34 @@ class AssemblyDisplay(QGraphicsItem):
     def make_labels(self):
         id_ = QGraphicsTextItem(parent=self)
 
-        f1 = self.type
-        f2 = ""
-        f3 = ""
+        f1 = "Type {0}".format(self.type)
+        if self.type == 0:
+          f1 = ""
+          f2 = ""
+          f3 = ""
+        elif self.type == 1:
+          f2 = "1.6%"
+          f3 = "no ba"
+        elif self.type == 2:
+          f2 = "2.4%"
+          f3 = "no ba"
+        elif self.type == 3:
+          f2 = "2.4%"
+          f3 = "12 ba"
+        elif self.type == 4:
+          f2 = "3.1%"
+          f3 = "no ba"
+        elif self.type == 5:
+          f2 = "3.1%"
+          f3 = "no ba"
+        else:
+          f2 = ""
+          f3 = ""
         f4 = ""
         f5 = ""
         f6 = ""
+        
+        
         text = '<p style="font-size:12px">'
         text += "<center>{0}<\center>".format(f1)
         text += "<center>{0}</center>".format(f2)
@@ -174,7 +197,7 @@ class AssemblyDisplay(QGraphicsItem):
         painter.drawPath(self.path)
 
     def refresh(self):
-        if self.isSelected():
+        if self.isSelected() and self.type != 0:
             self.color = Qt.red
         else:
             self.color = self.defaultColor
