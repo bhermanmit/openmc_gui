@@ -52,6 +52,7 @@ class MainWindow(QMainWindow):
         self.coreDisplay = widgets.CoreDisplay(None)
         self.plotShannon = widgets.PlotWidget()
         self.plotKeff = widgets.PlotWidget()
+        self.powerDist = widgets.PlotWidget()
         self.logView = widgets.LogWatcher(self.engine.outputlog)
         self.assemblyControls = widgets.AssemblyControls()
 
@@ -61,6 +62,7 @@ class MainWindow(QMainWindow):
         tabsPlot = QTabWidget()
         tabsPlot.addTab(self.plotKeff, "K effective")
         tabsPlot.addTab(self.plotShannon, "Shannon Entropy")
+        tabsPlot.addTab(self.powerDist, "Power Distribution")
 
         outerHorSplit = QSplitter()
         leftVertSplit = QSplitter()
@@ -80,6 +82,7 @@ class MainWindow(QMainWindow):
         self.setCentralWidget(outerHorSplit)
         
         self.connect(self.assemblyControls,SIGNAL("run openmc"),self.run_openmc)
+        self.connect(self.assemblyControls,SIGNAL("run openmc plot"),self.run_openmc_plot)
         
         self.connect(self.engine,SIGNAL("new output data"),self.update_plots)
 
@@ -90,6 +93,10 @@ class MainWindow(QMainWindow):
     
       stencil = self.coreDisplay.stencil
       self.engine.run(params,stencil)
+
+    def run_openmc_plot(self):
+      stencil = self.coreDisplay.stencil
+      self.engine.run_plot(stencil)
 
     def update_plots(self,data):
       self.plotKeff.add_point(data['keff'])

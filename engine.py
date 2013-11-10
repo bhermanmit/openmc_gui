@@ -12,13 +12,18 @@ class OpenMCEngine(QObject):
     self.outputlog = "output.log"
     
   def run(self,params,stencil):
-    pass
     self.make_inputs(stencil)
     self.execute(params)
 
+  def run_plot(self,stencil):
+    self.make_inputs(stencil)
+    proc = Popen(['openmc','--plot','tmpdir/minicore_inputs'])
+    proc.wait()
+    self.process_geometry_plot()
   def make_inputs(self,stencil):
+      geotemp = 'tmpdir/minicore_inputs/geometry.template'
       geofile = 'tmpdir/minicore_inputs/geometry.xml'
-      with open(geofile,'r') as fh:
+      with open(geotemp,'r') as fh:
           lines = fh.read().splitlines()
       rowbegin = 7697 # where does core lattice start
       nlines = 5
@@ -32,7 +37,7 @@ class OpenMCEngine(QObject):
               for j in range(3):
                   sline[colbegin + j + 1] = self.map_core(stencil[i][j+1])
           else:
-              for j in range(4):
+              for j in range(5):
                   sline[colbegin + j] = self.map_core(stencil[i][j])
 
           # replace the line
@@ -40,7 +45,7 @@ class OpenMCEngine(QObject):
           for item in sline:
               newstr += '{0} '.format(item)
           lines[rowbegin + i] = newstr
-
+          print newstr
           # rewrite file
           with open(geofile,'w') as fh:
               for aline in lines:
@@ -66,10 +71,9 @@ class OpenMCEngine(QObject):
 #   timer.stop()
     
     # run openmc here with subprocess, piping output to self.outputlog
-    fh = open('output.log','w')
-    openmc_path = 'openmc'
+#   fh = open('output.log','w')
     proc = Popen(['openmc','tmpdir/minicore_inputs'])
-    fh.close()
+#   fh.close()
 
   def parse_output(self):
     # parse output here and fire signal with new datapoints for plotting
@@ -78,3 +82,6 @@ class OpenMCEngine(QObject):
     data['shannon'] = 1.3
     data['keff'] = 1.0
     self.emit(SIGNAL("new plot data"),data)
+
+  def process_geometry_plot(self):
+      proc = Popen(['convert','tmpdir/minicore_inputs/1_slice.ppm','tmpdir/minicore_inputs/1_slice.png'])
