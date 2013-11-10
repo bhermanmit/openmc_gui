@@ -52,7 +52,9 @@ class MainWindow(QMainWindow):
         self.coreDisplay = widgets.CoreDisplay(None)
         self.plotShannon = widgets.PlotWidget()
         self.plotKeff = widgets.PlotWidget()
+        self.geometry = widgets.PlotWidget()
         self.powerDist = widgets.PlotWidget()
+        self.fluxDist = widgets.PlotWidget()
         self.logView = widgets.LogWatcher(self.engine.outputlog)
         self.assemblyControls = widgets.AssemblyControls()
 
@@ -62,7 +64,9 @@ class MainWindow(QMainWindow):
         tabsPlot = QTabWidget()
         tabsPlot.addTab(self.plotKeff, "K effective")
         tabsPlot.addTab(self.plotShannon, "Shannon Entropy")
-        tabsPlot.addTab(self.powerDist, "Power Distribution")
+        tabsPlot.addTab(self.geometry, "Geometry")
+        tabsPlot.addTab(self.powerDist, "Power")
+        tabsPlot.addTab(self.fluxDist, "Flux")
 
         outerHorSplit = QSplitter()
         leftVertSplit = QSplitter()
