@@ -10,13 +10,54 @@ class OpenMCEngine(QObject):
     QObject.__init__(self,parent=parent)
     self.outputlog = "output.log"
     
-    
-    
   def run(self,params,stencil):
     pass
-    #self.make_inputs(stencil)
+    self.make_inputs(stencil)
     #self.execute(params)
-    
+
+  def make_inputs(self,stencil):
+      print stencil
+      geofile = 'tmpdir/minicore_inputs/geometry.xml'
+      with open(geofile,'r') as fh:
+          lines = fh.read().splitlines()
+      rowbegin = 7697 # where does core lattice start
+      nlines = 5
+      colbegin = 7
+      for i in range(nlines):
+          aline = lines[rowbegin + i] # extract line
+          sline = aline.split() # split line by spaces
+
+          # check for corner indents in row
+          if i == 0 or i == nlines - 1:
+              for j in range(3):
+                  sline[colbegin + j + 1] = self.map_core(stencil[i][j+1])
+          else:
+              for j in range(4):
+                  sline[colbegin + j] = self.map_core(stencil[i][j])
+
+          # replace the line
+          newstr = ''
+          for item in sline:
+              newstr += '{0} '.format(item)
+          lines[rowbegin + i] = newstr
+
+          # rewrite file
+          with open(geofile,'w') as fh:
+              for aline in lines:
+                  fh.write(aline + '\n')
+
+  def map_core(self,guid):
+      if guid == 1:
+          return str(144) # 1.6% No BAs
+      if guid == 2:
+          return str(180) # 2.4% No BAs
+      if guid == 3:
+          return str(184) # 2.4% 12 BAs
+      if guid == 4:
+          return str(196) # 3.1% No BAs
+      if guid == 5:
+          return str(200) # 3.1% 20 BAs
+
   def execute(self,params):
     timer = QTimer(self)
     QObject.connect(timer, SIGNAL("timeout()"), self.parse_output)
