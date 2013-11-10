@@ -22,7 +22,7 @@ class LogWatcher(QWidget):
 
         timer = QTimer(self)
         QObject.connect(timer, SIGNAL("timeout()"), self.update_display)
-        timer.start(1000)
+        timer.start(10)
 
 
     def update_display(self):
