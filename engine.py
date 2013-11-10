@@ -20,9 +20,10 @@ class OpenMCEngine(QObject):
 
   def run_plot(self,stencil):
     self.make_inputs(stencil)
-    proc = Popen(['openmc','--plot','tmpdir/minicore_inputs'])
-    proc.wait()
-    self.process_geometry_plot()
+    worker = Worker(self,plot=True)
+    QObject.connect(worker,SIGNAL("finished()"),self.process_geometry_plot)
+    worker.start()
+
   def make_inputs(self,stencil):
       geotemp = 'tmpdir/minicore_inputs/geometry.template'
       geofile = 'tmpdir/minicore_inputs/geometry.xml'
@@ -156,13 +157,17 @@ class OpenMCEngine(QObject):
 
 class Worker(QThread):
 
-    def __init__(self,parent):
+    def __init__(self,parent,plot=False):
         '''Parent must be defined to stop early garbage collection'''
         QThread.__init__(self,parent)
+        self.plot = plot
 
     def run(self):
       try:
-        proc = Popen(['openmc','tmpdir/minicore_inputs'])
+        if self.plot:
+          proc = Popen(['openmc','--plot','tmpdir/minicore_inputs'])
+        else:
+          proc = Popen(['openmc','tmpdir/minicore_inputs'])
         proc.wait()
       except OSError:
         print "Problem running OpenMC!  Is the exe in the path?"
