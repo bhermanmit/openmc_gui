@@ -53,8 +53,8 @@ class MainWindow(QMainWindow):
         self.plotShannon = widgets.PlotWidget()
         self.plotKeff = widgets.PlotWidget()
         self.geometry = widgets.ImageViewer(image_path=None)
-        self.powerDist = widgets.PlotWidget()
-        self.fluxDist = widgets.PlotWidget()
+        self.powerDist = widgets.ImageViewer(image_path=None)
+        self.fluxDist = widgets.ImageViewer(image_path=None)
         self.logView = widgets.LogWatcher(self.engine.outputlog)
         self.assemblyControls = widgets.AssemblyControls()
         # Setup widget layouts
@@ -90,6 +90,7 @@ class MainWindow(QMainWindow):
         self.connect(self.engine,SIGNAL("new output data"),self.update_plots)
         
         self.connect(self.engine,SIGNAL("new geometry plot"),self.update_geometry_plot)
+        self.connect(self.engine,SIGNAL("new output plots"),self.update_output_plots)
         
         self.connect(self.logView,SIGNAL("new line"),self.parse_logline)
 
@@ -109,6 +110,12 @@ class MainWindow(QMainWindow):
     def update_geometry_plot(self,img_path):
       self.geometry.set_image(img_path)
       self.tabsPlot.setCurrentWidget(self.geometry)
+
+    def update_output_plots(self,img_paths):
+      print img_paths
+      self.powerDist.set_image(img_paths[0])
+      self.fluxDist.set_image(img_paths[1])
+      self.tabsPlot.setCurrentWidget(self.powerDist)
 
     def run_openmc(self,params):
       self.plotShannon.clear()

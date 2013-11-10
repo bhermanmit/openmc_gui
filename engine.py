@@ -143,6 +143,10 @@ class OpenMCEngine(QWidget):
       Popen(['gnuplot','tmpdir/minicore_outputs/nfiss.plot'])
       Popen(['gnuplot','tmpdir/minicore_outputs/flux1.plot'])
       Popen(['gnuplot','tmpdir/minicore_outputs/flux2.plot'])
+      
+      self.emit(SIGNAL("new output plots"),
+                ["tmpdir/minicore_outputs/nfiss.png",
+                 "tmpdir/minicore_outputs/flux1.png"])
 
   def write_gnuplot_data(self, nfiss, flux1, flux2):
 
