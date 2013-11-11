@@ -104,6 +104,7 @@ class OpenMCEngine(QWidget):
 
   def process_geometry_plot(self):
       proc = Popen(['convert','tmpdir/minicore_inputs/1_slice.ppm','tmpdir/minicore_inputs/1_slice.png'])
+      proc.wait()
       self.emit(SIGNAL("new geometry plot"),'tmpdir/minicore_inputs/1_slice.png')
 
   def extract_mean(self, sp, tally_id, score_id):
