@@ -52,21 +52,20 @@ class MainWindow(QMainWindow):
         self.coreDisplay = widgets.CoreDisplay(None)
         self.plotShannon = widgets.PlotWidget()
         self.plotKeff = widgets.PlotWidget()
-        self.geometry = widgets.PlotWidget()
-        self.powerDist = widgets.PlotWidget()
-        self.fluxDist = widgets.PlotWidget()
+        self.geometry = widgets.ImageViewer(image_path=None)
+        self.powerDist = widgets.ImageViewer(image_path=None)
+        self.fluxDist = widgets.ImageViewer(image_path=None)
         self.logView = widgets.LogWatcher(self.engine.outputlog)
         self.assemblyControls = widgets.AssemblyControls()
-
         # Setup widget layouts
 
         rightLayout = QHBoxLayout()
-        tabsPlot = QTabWidget()
-        tabsPlot.addTab(self.plotKeff, "K effective")
-        tabsPlot.addTab(self.plotShannon, "Shannon Entropy")
-        tabsPlot.addTab(self.geometry, "Geometry")
-        tabsPlot.addTab(self.powerDist, "Power")
-        tabsPlot.addTab(self.fluxDist, "Flux")
+        self.tabsPlot = QTabWidget()
+        self.tabsPlot.addTab(self.plotKeff, "K effective")
+        self.tabsPlot.addTab(self.plotShannon, "Shannon Entropy")
+        self.tabsPlot.addTab(self.geometry, "Geometry")
+        self.tabsPlot.addTab(self.powerDist, "Power")
+        self.tabsPlot.addTab(self.fluxDist, "Flux")
 
         outerHorSplit = QSplitter()
         leftVertSplit = QSplitter()
@@ -78,7 +77,7 @@ class MainWindow(QMainWindow):
         leftVertSplit.addWidget(self.coreDisplay)
         leftVertSplit.addWidget(self.assemblyControls)
 
-        rightVertSplit.addWidget(tabsPlot)
+        rightVertSplit.addWidget(self.tabsPlot)
         rightVertSplit.addWidget(self.logView)
 
         outerHorSplit.addWidget(leftVertSplit)
@@ -89,12 +88,38 @@ class MainWindow(QMainWindow):
         self.connect(self.assemblyControls,SIGNAL("run openmc plot"),self.run_openmc_plot)
         
         self.connect(self.engine,SIGNAL("new output data"),self.update_plots)
+        
+        self.connect(self.engine,SIGNAL("new geometry plot"),self.update_geometry_plot)
+        self.connect(self.engine,SIGNAL("new output plots"),self.update_output_plots)
+        
+        self.connect(self.logView,SIGNAL("new line"),self.parse_logline)
+
+    def parse_logline(self,line):
+      words = line.split()
+      if len(words)>0 and "/1" in words[0]:
+        data = {}
+        if len(words) == 3:
+          data['keff'] = float(words[1])
+          data['shannon'] = float(words[2])
+          self.update_plots(data)
+        elif len(words) == 6:
+          data['keff'] = float(words[3])
+          data['shannon'] = float(words[2])
+          self.update_plots(data)
+
+    def update_geometry_plot(self,img_path):
+      self.geometry.set_image(img_path)
+      self.tabsPlot.setCurrentWidget(self.geometry)
+
+    def update_output_plots(self,img_paths):
+      print img_paths
+      self.powerDist.set_image(img_paths[0])
+      self.fluxDist.set_image(img_paths[1])
+      self.tabsPlot.setCurrentWidget(self.powerDist)
 
     def run_openmc(self,params):
-    
       self.plotShannon.clear()
       self.plotKeff.clear()
-    
       stencil = self.coreDisplay.stencil
       self.engine.run(params,stencil)
 
